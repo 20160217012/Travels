@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        form{
+            width:270px;
+        }
+        input{
+            width: 70%;
+            background: #eee;
+        }
+        input:focus{
+            background: #fff;
+        }
+        form{
+            padding: 0 12px 12px;
+        }
+        label{
+            display: block;
+            padding-bottom:12px;
+        }
+        #img-vcode{
+            width: 56px;
+            height: 21px;
+            float:right;
+            position: relative;
+            top:2px;
+            left:-6px
+        }
+        .label-text{
+            width: 30%;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+<div id="app">            <!--Vue 挂载点-->
+    <div id="wrap">
+        <div id="header">
+<!--            <div style="float: right;padding-top: 24px">2009/11/20</div>-->
+            <h1>旅游信息管理系统</h1>
+        </div>
+        <div id="header-bar"></div>
+        <div id="content" style="height: 360px">
+            <img src="img/timg.jpg" style="float: right;height: 320px">
+            <h2>注册</h2>
+            <form action="province/provincelist.html" method="post">
+                <label>
+                    <div class="label-text">账&emsp;号：</div>
+                    <input type="text" v-model="user.username" name="username">
+                </label>
+                <label>
+                    <div class="label-text">密&emsp;码：</div>
+                    <input type="password" v-model="user.password" name="password">
+                </label>
+                <label>
+                    <div class="label-text">邮&emsp;箱：</div>
+                    <input type="text" v-model="user.email" name="email">
+                </label>
+                <img :src="src" id="img-vcode"  :key="key" @click="getImage" style="width: 100px;height: 43px" >
+                <label>
+                    <div class="label-text">验证码：</div>
+                    <input type="text" v-model="code" name="vcode" style="width: 100px">
+                </label>
+                <button type="button" @click="saveUserInfo">提 交</button>&emsp;
+                <a href="login.html">去登录</a>
+            </form>
+        </div>
+        <div id="footer">
+            3526381910@qq.com
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script>
+    const app = new Vue({
+        el:"#app",      //挂载点
+        data:{
+            user:{},
+            code:"",
+            src:"",
+            key:"",
+        },
+        methods:{
+            //注册
+            saveUserInfo(){
+                console.log(this.user);     //注意做测试的时候要实例一个对象，否则报错，就是要this.
+                console.log(this.code);
+                if(!this.user.username){
+                    alert('用户名不能为空！！');
+                    return;
+                }
+                if (!this.user.password){
+                    alert('密码不能为空！！');
+                    return;
+                }
+                //拿到页面数据后就要向后端发送axios
+                axios.post("http://localhost:8989/user/register?code="+this.code+"&key="+this.key,this.user).then((res)=>{
+                    console.log(res.data.key);         //打印测试发送到后台的数据
+                    if (res.data.state){
+                        alert(res.data.msg+",现在可以去登录了");     //注意这里的res.data.msg,这是从后端返回的处理结果，在这里做一个拼接再弹窗
+                        location.href='./login.html';
+                    }else {
+                        alert(res.data.msg);
+                    }
+                });
+            },
+            getImage(){
+                _this = this;
+                axios.get("http://localhost:8989/user/getImage").then((res)=>{
+                    console.log(res.data.key);
+                    _this.src = "data:image/png;base64,"+res.data.image;     //这一步的意思是,在图片的src上对后端传过来的base64编码的验证码子字符串进行base64解码
+                    _this.key = res.data.key;
+                })
+            },
+            created(){
+                this.getImage();    //获取验证码
+            }
+        }
+    })
+</script>

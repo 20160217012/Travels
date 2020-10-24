@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        table{
+            width: 100%;
+            margin-bottom: 15px;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th,td{
+            border: 1px solid #CBD6DE;
+            padding-left: 10px;
+            line-height: 28px;
+        }
+        th{
+            text-align: left;
+            background: linear-gradient(#edf2f5,#dce9f2,#edf2f5);
+            color:#467aa7;
+        }
+        tbody tr:nth-child(4n),tbody tr:nth-child(4n-1){
+            background: #f2f2f2;
+        }
+        #pages{
+            text-align: center;
+            padding: 8px 0;
+        }
+        .page{
+            min-width: 50px;
+            display: inline-block;
+        }
+        .viewspotimg{
+            width: 135px;
+            height: 135px;
+            margin-left: -10px;
+            display: block;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div id="wrap">
+        <div id="header">
+            <div style="float: right;padding-top: 24px">
+<!--                2009/11/20&emsp;-->
+                <a href="../login.html" style="color:#fff;float: right">安全退出</a>
+            </div>
+            <h1>旅游信息管理系统</h1>
+        </div>
+        <div id="header-bar"></div>
+        <div id="content">
+            <h2>景点列表</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th width="14%">ID</th>
+                    <th width="20%">景点</th>
+                    <th width="15%">印象图</th>
+                    <th width="26%">旺季时间</th>
+                    <th width="10%">旺季门票</th>
+                    <th width="10%">淡季门票</th>
+                    <th width="18%">操作</th>
+                </tr>
+                </thead>
+                <tbody v-for="place in places">  <!--这里的表单是要对整个tr进行操作-->
+                    <tr>
+                        <td rowspan="2"><span v-text="place.id"/></td>
+                        <td rowspan="2"><span v-text="place.name"/></td>
+                        <td><img :src="'data:image/png;base64,'+place.picpath" class="viewspotimg" ></td>
+                        <td><span v-text="place.hottime"/></td>
+                        <td><span v-text="place.hotticke"/></td>
+                        <td><span v-text="place.dimticket"/></td>
+                        <td style="text-align: center">
+                            <a href="javascript:;" @click="deletePlace(place.id)">删除景点</a><br>
+                            <a :href="'updateviewspot.html?id='+place.id">修改景点</a>          <!--这个地方把picpath也传过去-->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="5">
+                            <div style="height: 56px;font-size: 14px;line-height: normal">
+                                <b style="color:#467aa7">简介：</b><span v-text="place.placedes"/>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <a :href="'addviewspot.html?id='+id"><button type="button">添加景点</button></a>&emsp;
+            <a href="../province/provincelist.html">返回省份列表</a>
+            <div id="pages">
+                <a href="javascript:;" v-if="page>=1" class="page" @click="findAllPage(page-1)">&lt;上一页</a>
+<!--                <span v-for="index in totalPage">-->
+<!--                     <a href="javascript:;" v-if="page==index"  class="page" v-text="index"></a>-->
+<!--                     <a href="javascript:;" v-if="page!=index" @click="findAllPage(index)" class="page" v-text="index"></a>-->
+<!--                </span>-->
+                <a href="javascript:;" v-for="index in totalPage" @click="findAllPage(index)" class="page" v-text="index"></a>
+                <a href="javascript:;" v-if="page<totalPage"  class="page" @click="findAllPage(page+1)">下一页&gt;</a>
+            </div>
+        </div>
+        <div id="footer">
+            3526381910@qq.com
+        </div>
+    </div>
+</div>
+</body>
+</html>
+<script src="../js/vue.js"></script>
+<script src="../js/axios.min.js"></script>
+<script>
+    const app = new Vue({
+        el:"#app",
+        data:{
+           places:[],
+            id:"",
+            totalPage:1,
+            page:1,
+        },
+        methods:{
+            findAllPage(index){   //封装查询所有的函数
+                // console.log("当前省份的id>>>>>>"+id);
+                // 拿到当前省份的id后就发起请求，根据当前id查询对应省份的景点信息
+                _this = this;
+                if(index){
+                    this.page = index;
+                }
+                console.log("当前页>>>>"+this.page);
+                axios.get("http://localhost:8989/place/findAllPlace?provinceId="+this.id+"&page="+this.page).then((res)=>{
+                    _this.places = res.data.places;
+                    _this.totalPage = res.data.totalPage;
+                    _this.page = res.data.page;
+                });
+            },
+            deletePlace(id){    //删除景点信息
+                _this = this;
+                console.log(id);    //先查看能否获取到当前景点的Id
+                if(confirm("确定要删除该景点吗?")){
+                    axios.get("http://localhost:8989/place/delete?id="+id).then((res)=>{
+                        if(res.data.state){
+                            alert(res.data.msg+",点击确定刷新数据");
+                            location.reload();
+                        }else{
+                            alert(res.data.msg);
+                        }
+                        _this.id = res.data.id;
+                    });
+                }
+            }
+        },
+        created(){
+            //调用方法的时候再获取id
+            let id = location.href.substring(location.href.indexOf("=")+1)   //这里注意一下，这是不使用路由的传值方式，通过截取请求地址中携带的id来获取id
+            this.id = id;
+            this.findAllPage();
+        }
+    })
+</script>

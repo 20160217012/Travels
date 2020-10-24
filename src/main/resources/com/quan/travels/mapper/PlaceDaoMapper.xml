@@ -1,0 +1,54 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.quan.travels.dao.PlaceDao">
+    <!--根据省份Id查询该省份所有的景点信息并排序-->
+    <select id="findByProvinceIdPage" resultType="Place">
+        select id,name,picpath,hottime,hotticke,dimticket,placedes,provinceid
+        from t_place
+        where provinceid = #{provinceId}
+        order by  hotticke
+        limit #{start},#{rows}
+    </select>
+
+    <!--根据省份Id查询该省份所有的景点个数-->
+    <select id="findByProvinceIdCounts" parameterType="String" resultType="Integer">
+        select count(id) from t_place where provinceid = #{provinceId}
+    </select>
+
+    <!--保存place景点数据-->
+    <insert id="save" parameterType="Place" useGeneratedKeys="true" keyProperty="id">
+        insert into t_place values (#{id},#{name},#{picpath},#{hottime},#{hotticke},#{dimticket},#{placedes},#{provinceid})
+    </insert>
+
+    <!--根据Id查询景点信息-->
+    <select id="findOne" parameterType="String" resultType="Place">
+        select id,name,picpath,hottime,hotticke,dimticket,placedes,provinceid
+        from t_place
+        where id = #{id}
+    </select>
+
+    <!--根据Id修改对应的景点信息-->
+    <!--因为修改景点信息的时候，有可能将该景点信息修改为其他的省份,所以最后一项provinceid也要加上-->
+    <update id="update" parameterType="Place">
+        update t_place set
+            name=#{name},
+            picpath=#{picpath},
+            hottime=#{hottime},
+            hotticke=#{hotticke},
+            dimticket=#{dimticket},
+            placedes=#{placedes},
+            provinceid=#{provinceid}
+        where id=#{id}
+    </update>
+
+    <!--删除景点信息-->
+    <delete id="delete" parameterType="String">
+        delete from t_place where id = #{id}
+    </delete>
+
+
+
+
+</mapper>
+
